@@ -1,4 +1,12 @@
-chef-naviserver
-===============
+Description
+===========
 
-Install/configure naviserver
+Requirements
+============
+
+Attributes
+==========
+
+Usage
+=====
+
