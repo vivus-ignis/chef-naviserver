@@ -7,15 +7,17 @@
 # All rights reserved - Do Not Redistribute
 #
 
-remote_file "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}.tar.gz)" do
+remote_file "Naviserver distribution, v. #{node['naviserver']['version']}" do
+  path   "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}.tar.gz"
   source "http://downloads.sourceforge.net/project/naviserver/naviserver/#{node['naviserver']['version']}/naviserver-#{node['naviserver']['version']}.tar.gz"
 
   not_if { ::File.exists? "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}.tar.gz" }
 end
 
-execute "tar xzf #{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}.tar.gz" do
+execute "Unpack naviserver distribution" do
+  command "tar xzf #{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}.tar.gz"
   
-  not_if { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver#{node['naviserver']['version']}" }
+  not_if  { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver#{node['naviserver']['version']}" }
 end
 
 # cd $(WORKDIR)/naviserver-$(NS_VER) && \
