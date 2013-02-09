@@ -7,6 +7,10 @@
 # All rights reserved - Do Not Redistribute
 #
 
+%w{ tcl tcl-devel }.each do |pkg|
+  package pkg
+end
+
 remote_file "Naviserver distribution, v. #{node['naviserver']['version_full']}" do
   path   "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version_full']}.tar.gz"
   source "http://downloads.sourceforge.net/project/naviserver/naviserver/#{node['naviserver']['version']}/naviserver-#{node['naviserver']['version_full']}.tar.gz"
@@ -16,36 +20,24 @@ end
 
 execute "Unpack naviserver distribution" do
   command "tar xzf #{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version_full']}.tar.gz"
-  
-  not_if  { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver#{node['naviserver']['version']}" }
+  cwd     Chef::Config[:file_cache_path]
+  not_if  { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}" }
 end
 
-# cd $(WORKDIR)/naviserver-$(NS_VER) && \
-# touch version_include.in && \
-# ./configure --prefix=$(TARGET_DIR)/naviserver $(64MODTCL) \
-#   --with-tcl=$(TARGET_DIR)/tcl/lib \
-#   --with-tclinclude=$(TARGET_DIR)/tcl/include && \
-# $(SED) -i "s|install-config install-doc install-examples install-notice|install-config install-examples install-notice|" Makefile && \
-# make && \
-# make install
+is_64bit = node['kernel']['machine'] == "x86_64" ? "--enable-64bit" : ""
 
-# $(_NAVISERVER_MODULES_INSTALL_COOKIE): $(_NAVISERVER_INSTALL_COOKIE)
-#   rm -rf  $(WORKDIR)/modules
-#   #rm -f  $(WORKDIR)/naviserver-modules-$(NS_VER).tar.gz
-#   cd $(WORKDIR) && $(FETCH) "http://downloads.sourceforge.net/project/naviserver/naviserver/4.99.3/naviserver-modules-4.99.3.tar.gz?use_mirror=mesh"
-#   cd $(WORKDIR) && tar xzf naviserver-modules-$(NS_VER).tar.gz
-#   cd $(WORKDIR)/modules/nsmemcache && \
-#     NAVISERVER=$(TARGET_DIR)/naviserver make && \
-#     NAVISERVER=$(TARGET_DIR)/naviserver make install
-# # cd $(WORKDIR)/modules/nsdbi && \
-# #   $(SED) -i "s|NAVISERVER  = /usr/local/ns|NAVISERVER  = $(TARGET_DIR)/naviserver|g" Makefile && \
-# #   make && make install
-# #   $(SED) -i 's|MODLIBS  =  -lmysqlclient_r|MODLIBS  =  -lmysqlclient_r -lnsdb|g' Makefile && 
-#   cd $(WORKDIR)/modules/nsdbmysql && \
-#     $(SED) -i 's|CFLAGS   = -I/usr/include/mysql|CFLAGS   = -I/usr/include/mysql -L/usr/lib$(64LIB)/mysql|g' Makefile && \
-#     NAVISERVER=$(TARGET_DIR)/naviserver make && \
-#     NAVISERVER=$(TARGET_DIR)/naviserver make install
-#   cd $(WORKDIR)/modules/nsssl && NAVISERVER=$(TARGET_DIR)/naviserver make && NAVISERVER=$(TARGET_DIR)/naviserver make install
-# # cd $(WORKDIR)/modules/nsgdchart && NAVISERVER=$(TARGET_DIR)/naviserver make && NAVISERVER=$(TARGET_DIR)/naviserver make install
-#   cd $(WORKDIR)/modules/nsmemcache && NAVISERVER=$(TARGET_DIR)/naviserver make && NAVISERVER=$(TARGET_DIR)/naviserver make install
-#   touch $@
+bash "Compile naviserver" do
+  cwd "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}"
+  code <<-EOH
+    set -x
+    exec >  /var/tmp/chef-naviserver-compile.log
+    exec 2> /var/tmp/chef-naviserver-compile.log
+    touch version_include.in
+   ./configure --prefix=#{node['naviserver']['install_prefix']}/naviserver #{is_64bit}
+   sed -i "s|install-config install-doc install-examples install-notice|install-config install-examples install-notice|" Makefile
+   make
+   make install
+  EOH
+
+  not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/sbin/naviserver" }
+end
