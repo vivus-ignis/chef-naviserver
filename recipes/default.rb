@@ -24,7 +24,14 @@ execute "Unpack naviserver distribution" do
   not_if  { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}" }
 end
 
-is_64bit = node['kernel']['machine'] == "x86_64" ? "--enable-64bit" : ""
+case node['kernel']['machine']
+when "x86_64"
+  is_64bit = "--enable-64bit"
+  libdir   = "/usr/lib64"
+else
+  is_64bit = ""
+  libdir   = "/usr/lib"
+end
 
 bash "Compile naviserver" do
   cwd "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}"
@@ -33,10 +40,11 @@ bash "Compile naviserver" do
     exec >  /var/tmp/chef-naviserver-compile.log
     exec 2> /var/tmp/chef-naviserver-compile.log
     touch version_include.in
-   ./configure --prefix=#{node['naviserver']['install_prefix']}/naviserver #{is_64bit}
-   sed -i "s|install-config install-doc install-examples install-notice|install-config install-examples install-notice|" Makefile
-   make
-   make install
+   ./configure --prefix=#{node['naviserver']['install_prefix']}/naviserver #{is_64bit} \
+     --with-tcl=#{libdir} --with-tclinclude=/usr/include \
+   && sed -i "s|install-config install-doc install-examples install-notice|install-config install-examples install-notice|" Makefile \
+   && make \
+   && make install
   EOH
 
   not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/sbin/naviserver" }
