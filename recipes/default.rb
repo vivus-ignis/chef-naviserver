@@ -40,7 +40,7 @@ bash "Compile naviserver" do
    && make install
   EOH
 
-  not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/bin/naviserver" }
+  not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/bin/nsd" }
 end
 
 runit_service "naviserver" do
