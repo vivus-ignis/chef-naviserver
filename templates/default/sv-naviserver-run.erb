@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec 2>&1
+exec <%= @options[:nsd_bin] %> -u <%= @options[:run_user] %> -f -b <%= @options[:bind_to] %> -t <%= @options[:config] %>

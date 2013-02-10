@@ -40,5 +40,17 @@ bash "Compile naviserver" do
    && make install
   EOH
 
-  not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/sbin/naviserver" }
+  not_if { ::File.exists? "#{node['naviserver']['install_prefix']}/naviserver/bin/naviserver" }
+end
+
+runit_service "naviserver" do
+  action :disable
+  default_logger true
+
+  options({
+            :nsd_bin  => "#{node['naviserver']['install_prefix']}/naviserver/bin/nsd",
+            :bind_to  => node['naviserver']['bind_to'],
+            :config   => "#{node['naviserver']['install_prefix']}/naviserver/conf/nsconfig.tcl",
+            :run_user => node['naviserver']['run_user']
+          })
 end
