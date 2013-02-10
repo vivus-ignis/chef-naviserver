@@ -7,9 +7,7 @@
 # All rights reserved - Do Not Redistribute
 #
 
-%w{ tcl tcl-devel }.each do |pkg|
-  package pkg
-end
+include_recipe "tcl"
 
 remote_file "Naviserver distribution, v. #{node['naviserver']['version_full']}" do
   path   "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version_full']}.tar.gz"
@@ -24,14 +22,9 @@ execute "Unpack naviserver distribution" do
   not_if  { ::File.directory? "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}" }
 end
 
-case node['kernel']['machine']
-when "x86_64"
-  is_64bit = "--enable-64bit"
-  libdir   = "/usr/lib64"
-else
-  is_64bit = ""
-  libdir   = "/usr/lib"
-end
+is_64bit = node['kernel']['machine'] == "x86_64" ? "--enable-64bit" : ""
+libdir   = "#{node['tcl']['install_prefix']}/tcl/lib"
+incdir   = "#{node['tcl']['install_prefix']}/tcl/include"
 
 bash "Compile naviserver" do
   cwd "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}"
@@ -41,7 +34,7 @@ bash "Compile naviserver" do
     exec 2> /var/tmp/chef-naviserver-compile.log
     touch version_include.in
    ./configure --prefix=#{node['naviserver']['install_prefix']}/naviserver #{is_64bit} \
-     --with-tcl=#{libdir} --with-tclinclude=/usr/include \
+     --with-tcl=#{libdir} --with-tclinclude=#{incdir} \
    && sed -i "s|install-config install-doc install-examples install-notice|install-config install-examples install-notice|" Makefile \
    && make \
    && make install
