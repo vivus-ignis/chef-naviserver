@@ -8,6 +8,7 @@
 #
 
 include_recipe "tcl"
+include_recipe "runit"
 
 remote_file "Naviserver distribution, v. #{node['naviserver']['version_full']}" do
   path   "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version_full']}.tar.gz"
