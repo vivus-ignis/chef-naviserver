@@ -26,6 +26,8 @@ is_64bit = node['kernel']['machine'] == "x86_64" ? "--enable-64bit" : ""
 libdir   = "#{node['tcl']['install_prefix']}/tcl/lib"
 incdir   = "#{node['tcl']['install_prefix']}/tcl/include"
 
+package "zlib-devel"
+
 bash "Compile naviserver" do
   cwd "#{Chef::Config[:file_cache_path]}/naviserver-#{node['naviserver']['version']}"
   code <<-EOH
